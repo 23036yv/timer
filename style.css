@@ -115,26 +115,7 @@ h1, h2 {
     margin-right: 5px;
 }
 
-.timer-presets {
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.btn-preset {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    margin: 0 5px;
-    background-color: #f0f0f0;
-    color: #333;
-    transition: background-color 0.3s ease;
-}
-
-    .btn-preset:hover {
-        background-color: #e0e0e0;
-    }
+/* プリセット関連のCSSは削除されました */
 
 textarea {
     width: calc(100% - 16px);
