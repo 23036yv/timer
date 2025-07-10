@@ -1,0 +1,397 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6; /* デフォルトの背景色 */
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* 上部に寄せる */
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: background-color 0.5s ease; /* 背景色変化を滑らかに */
+}
+
+    /* 集中中のボディ背景色 */
+    body.focusing {
+        background-color: #e8f5e9; /* 薄い緑色 */
+    }
+
+    /* 休憩中のボディ背景色 */
+    body.break-time {
+        background-color: #ffebee; /* 薄い赤色 */
+    }
+
+.container {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 900px; /* 全体の最大幅を少し広げる */
+    display: flex; /* デフォルトは縦並び */
+    flex-direction: column;
+    gap: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #4CAF50;
+}
+
+h1, h2 {
+    color: #4CAF50;
+    margin-top: 0;
+}
+
+.card {
+    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.timer-display {
+    font-size: 4em;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+    color: #3f51b5; /* デフォルトの色 */
+    background-color: #e8eaf6; /* デフォルトの背景 */
+    padding: 15px;
+    border-radius: 8px;
+    transition: background-color 0.5s ease, color 0.5s ease; /* 色変化を滑らかに */
+}
+
+    /* 集中中のタイマー表示 */
+    .timer-display.focusing {
+        color: #388e3c; /* 濃い緑 */
+        background-color: #c8e6c9; /* 薄い緑 */
+    }
+
+    /* 休憩中のタイマー表示 */
+    .timer-display.break-time {
+        color: #d32f2f; /* 濃い赤 */
+        background-color: #ffcdd2; /* 薄い赤 */
+    }
+
+#progress-bar-container {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    height: 10px;
+    margin-bottom: 15px;
+    overflow: hidden; /* バーがはみ出さないように */
+}
+
+#progress-bar {
+    background-color: #4CAF50; /* プログレスバーの色 */
+    height: 100%;
+    width: 0%; /* 初期値 */
+    border-radius: 5px;
+    transition: width 0.5s linear; /* 幅の変化を滑らかに */
+}
+
+.timer-controls > div {
+    margin-bottom: 10px;
+}
+
+.timer-controls label {
+    display: inline-block;
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.timer-controls input[type="number"] {
+    width: 70px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-right: 15px;
+}
+
+.timer-controls input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.timer-presets {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.btn-preset {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin: 0 5px;
+    background-color: #f0f0f0;
+    color: #333;
+    transition: background-color 0.3s ease;
+}
+
+    .btn-preset:hover {
+        background-color: #e0e0e0;
+    }
+
+textarea {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    font-size: 1em;
+}
+
+.button-group {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin: 0 5px;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+    .btn-primary:hover:not(:disabled) {
+        background-color: #45a049;
+    }
+
+.btn-secondary {
+    background-color: #f44336;
+    color: white;
+}
+
+    .btn-secondary:hover:not(:disabled) {
+        background-color: #da3328;
+    }
+
+.btn-tertiary { /* リセットボタン用に新しいスタイルを追加 */
+    background-color: #607D8B; /* グレー系 */
+    color: white;
+}
+
+    .btn-tertiary:hover:not(:disabled) {
+        background-color: #455A64;
+    }
+
+.btn-primary-small { /* タスク追加ボタン用に小さいスタイルを追加 */
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    background-color: #2196F3; /* 青色 */
+    color: white;
+}
+
+    .btn-primary-small:hover:not(:disabled) {
+        background-color: #1976D2;
+    }
+
+.btn-small { /* カレンダーボタン用に小さいスタイルを追加 */
+    padding: 5px 10px;
+    font-size: 0.8em;
+    background-color: #9E9E9E; /* グレー */
+    color: white;
+}
+
+    .btn-small:hover {
+        background-color: #757575;
+    }
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* タスクリスト */
+#task-list {
+    margin-bottom: 15px;
+    background-color: #fefefe;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+    .task-item:last-child {
+        border-bottom: none; /* 最後の項目には下線なし */
+    }
+
+    .task-item input[type="checkbox"] {
+        margin-right: 10px;
+        transform: scale(1.2); /* チェックボックスを少し大きく */
+        cursor: pointer;
+    }
+
+    .task-item span {
+        flex-grow: 1; /* テキストが残りのスペースを占有 */
+        font-size: 1.1em;
+    }
+
+        .task-item span.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+    .task-item button {
+        background: none;
+        border: none;
+        color: #f44336; /* 削除ボタンの色 */
+        cursor: pointer;
+        margin-left: 10px;
+        padding: 5px;
+        font-size: 0.9em;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+        .task-item button:hover {
+            opacity: 1;
+        }
+
+.add-task {
+    display: flex;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+#new-task-input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+    font-size: 1em;
+}
+
+/* カレンダーセクションのスタイル */
+#calendar-section {
+    /* 大画面での配置はメディアクエリで制御 */
+    margin-top: 0; /* flex container内で自動調整されるため0に */
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #3f51b5;
+}
+
+#current-month-year {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7列（曜日） */
+    gap: 5px;
+    text-align: center;
+}
+
+.day-name {
+    background-color: #e0e0e0;
+    padding: 8px 0;
+    font-weight: bold;
+    border-radius: 4px;
+    color: #555;
+}
+
+.calendar-day {
+    background-color: #f8f8f8;
+    padding: 10px 0;
+    border-radius: 4px;
+    min-height: 50px; /* 日付セルの最小高さ */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9em;
+    position: relative; /* 集中時間表示の基準 */
+    border: 1px solid #eee;
+}
+
+    .calendar-day.empty {
+        background-color: #f0f0f0;
+        color: #aaa;
+    }
+
+    .calendar-day.current-day {
+        border: 2px solid #4CAF50; /* 今日の日付の強調 */
+        background-color: #e8f5e9;
+    }
+
+    .calendar-day .date-number {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+.focus-minutes {
+    font-size: 0.8em;
+    color: #4CAF50;
+    font-weight: bold;
+    background-color: rgba(76, 175, 80, 0.1);
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-top: 3px;
+}
+
+/* 大画面向けのレイアウト変更 */
+@media (min-width: 900px) { /* 必要に応じてブレークポイントを調整 */
+    .main-content-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* カレンダー(1) と 右パネル(2) */
+        gap: 20px;
+    }
+
+    #calendar-section {
+        grid-column: 1 / 2; /* 左側のカラムに配置 */
+        /* カレンダーの最小高さ調整 */
+        min-height: 500px; /* カレンダーが縦長になるように調整 */
+        display: flex;
+        flex-direction: column;
+    }
+
+        #calendar-section .calendar-grid {
+            flex-grow: 1; /* グリッドが残りのスペースを埋める */
+        }
+
+    .right-panel {
+        grid-column: 2 / 3; /* 右側のカラムに配置 */
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* タイマーとタスクの間隔 */
+    }
+}
+
+/* スマホでは縦並びに戻すための調整 */
+@media (max-width: 899px) {
+    .main-content-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
