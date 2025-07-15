@@ -1,12 +1,12 @@
 // ===============================================
-// 1. StorageManager ƒNƒ‰ƒX
+// 1. StorageManager ã‚¯ãƒ©ã‚¹
 // ===============================================
 class StorageManager {
     static save(key, data) {
         try {
             localStorage.setItem(key, JSON.stringify(data));
         } catch (e) {
-            console.error(`ƒf[ƒ^‚ÌLocalStorage‚Ö‚Ì•Û‘¶’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½ (ƒL[: ${key}):`, e);
+            console.error(`ãƒ‡ãƒ¼ã‚¿ã‚’LocalStorageã¸ã®ä¿å­˜ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ (ã‚­ãƒ¼: ${key}):`, e);
         }
     }
 
@@ -15,7 +15,7 @@ class StorageManager {
             const data = localStorage.getItem(key);
             return data ? JSON.parse(data) : null;
         } catch (e) {
-            console.error(`ƒf[ƒ^‚ÌLocalStorage‚©‚ç‚Ì“Ç‚İ‚İ’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½ (ƒL[: ${key}):`, e);
+            console.error(`ãƒ‡ãƒ¼ã‚¿ã‚’LocalStorageã‹ã‚‰ã®èª­ã¿è¾¼ã¿ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ (ã‚­ãƒ¼: ${key}):`, e);
             return null;
         }
     }
@@ -24,45 +24,45 @@ class StorageManager {
         try {
             localStorage.removeItem(key);
         } catch (e) {
-            console.error(`LocalStorage‚©‚ç‚Ìƒf[ƒ^íœ’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½ (ƒL[: ${key}):`, e);
+            console.error(`LocalStorageã‹ã‚‰ã®ãƒ‡ãƒ¼ã‚¿å‰Šé™¤ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ (ã‚­ãƒ¼: ${key}):`, e);
         }
     }
 }
 
 // ===============================================
-// 2. Timer ƒNƒ‰ƒX
+// 2. Timer ã‚¯ãƒ©ã‚¹
 // ===============================================
 class Timer {
     constructor(focusTimeMinutes = 25, breakTimeMinutes = 5) {
-        this.initialFocusTime = focusTimeMinutes * 60; // •b‚É•ÏŠ·
-        this.initialBreakTime = breakTimeMinutes * 60; // •b‚É•ÏŠ·
+        this.initialFocusTime = focusTimeMinutes * 60; // ç§’ã«å¤‰æ›
+        this.initialBreakTime = breakTimeMinutes * 60; // ç§’ã«å¤‰æ›
         this.focusTime = this.initialFocusTime;
         this.breakTime = this.initialBreakTime;
-        this.isFocusing = true; // Œ»İW’†ƒZƒbƒVƒ‡ƒ“’†‚©‹xŒeƒZƒbƒVƒ‡ƒ“’†‚©
-        this.remainingTime = this.focusTime; // Œ»İ‚ÌƒZƒbƒVƒ‡ƒ“‚Ìc‚èŠÔ
-        this.currentSessionTotalTime = this.focusTime; // Œ»İ‚ÌƒZƒbƒVƒ‡ƒ“‚Ì‡ŒvŠÔii’»ƒo[—pj
+        this.isFocusing = true; // ç¾åœ¨ãƒ•ã‚©ãƒ¼ã‚«ã‚¹ã‚»ãƒƒã‚·ãƒ§ãƒ³ä¸­ã‹ä¼‘æ†©ã‚»ãƒƒã‚·ãƒ§ãƒ³ä¸­ã‹
+        this.remainingTime = this.focusTime; // ç¾åœ¨ã®ã‚»ãƒƒã‚·ãƒ§ãƒ³ã®æ®‹ã‚Šæ™‚é–“
+        this.currentSessionTotalTime = this.focusTime; // ç¾åœ¨ã®ã‚»ãƒƒã‚·ãƒ§ãƒ³ã®åˆè¨ˆæ™‚é–“ï¼ˆãƒ—ãƒ­ã‚°ãƒ¬ã‚¹ãƒãƒ¼ç”¨ï¼‰
         this.intervalId = null;
         this.isPaused = true;
         this.totalFocusDuration = null;
         this.elapsedFocusTime = 0;
 
-        // ƒV[ƒPƒ“ƒXŠÖ˜A‚ÌƒvƒƒpƒeƒB
-        this.sessionSequence = null; // —á: [{ type: 'focus', duration: 25 }, { type: 'break', duration: 5 }]
+        // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹é–¢é€£ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
+        this.sessionSequence = null; // ä¾‹: [{ type: 'focus', duration: 25 }, { type: 'break', duration: 5 }]
         this.currentSessionIndex = 0;
 
-        this.onTick = () => { }; // 1•b‚²‚Æ‚ÉŒÄ‚Î‚ê‚éƒR[ƒ‹ƒoƒbƒN
-        this.onComplete = () => { }; // ŒÂX‚ÌƒZƒbƒVƒ‡ƒ“Š®—¹‚ÉŒÄ‚Î‚ê‚éƒR[ƒ‹ƒoƒbƒN (W’†/‹xŒe)
-        this.onSequenceComplete = () => { }; // ƒV[ƒPƒ“ƒX‘S‘ÌŠ®—¹‚ÉŒÄ‚Î‚ê‚éƒR[ƒ‹ƒoƒbƒN
+        this.onTick = () => { }; // 1ç§’ã”ã¨ã«å‘¼ã°ã‚Œã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯
+        this.onComplete = () => { }; // ä¸€ã¤ã®ã‚»ãƒƒã‚·ãƒ§ãƒ³ãŒçµ‚äº†ã—ãŸã¨ãã«å‘¼ã°ã‚Œã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ (é›†ä¸­/ä¼‘æ†©)
+        this.onSequenceComplete = () => { }; // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å…¨ä½“ãŒçµ‚äº†ã—ãŸã¨ãã«å‘¼ã°ã‚Œã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯
     }
 
-    // ’Êí‚Ì’PˆêƒTƒCƒNƒ‹İ’è
+    // é€šå¸¸ã®å˜ä¸€ã‚µã‚¤ã‚¯ãƒ«è¨­å®š
     setTimes(focusMinutes, breakMinutes) {
         this.initialFocusTime = focusMinutes * 60;
         this.initialBreakTime = breakMinutes * 60;
-        this.sessionSequence = null; // ƒV[ƒPƒ“ƒXƒ‚[ƒh‚ğ‰ğœ
+        this.sessionSequence = null; // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ãƒ¢ãƒ¼ãƒ‰ã‚’è§£é™¤
         this.currentSessionIndex = 0;
 
-        // ƒ^ƒCƒ}[‚ª’â~’†‚Ìê‡‚Ì‚İc‚èŠÔ‚Æ‡ŒvŠÔ‚ğXV
+        // ã‚¿ã‚¤ãƒãƒ¼ãŒåœæ­¢ã—ã¦ã„ã‚‹å ´åˆã®ã¿æ®‹ã‚Šæ™‚é–“ã¨åˆè¨ˆæ™‚é–“ã‚’æ›´æ–°
         if (this.isPaused) {
             this.focusTime = this.initialFocusTime;
             this.breakTime = this.initialBreakTime;
@@ -71,23 +71,15 @@ class Timer {
         }
     }
 
-    // ƒV[ƒPƒ“ƒXİ’è
+    // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹è¨­å®š
     setSessionSequence(sequence) {
-        this.sessionSequence = sequence.map(s => ({ ...s, duration: s.duration * 60 })); // •b‚É•ÏŠ·
+        this.sessionSequence = sequence.map(s => ({ ...s, duration: s.duration * 60 })); // ç§’ã«å¤‰æ›
         this.currentSessionIndex = 0;
         this.isFocusing = (this.sessionSequence[0].type === 'focus');
         this.remainingTime = this.sessionSequence[0].duration;
         this.currentSessionTotalTime = this.remainingTime;
-        this.pause(); // ƒV[ƒPƒ“ƒXİ’è‚Íí‚Éˆê’U’â~
+        this.pause(); // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹è¨­å®šå¾Œã¯ä¸€æ—¦åœæ­¢
     }
-
-    // setPomodoro() ƒƒ\ƒbƒh‚Í App ƒNƒ‰ƒX‚ÅŠÇ—‚³‚ê‚é‚½‚ßA‚±‚±‚Å‚Í•s—viíœj
-    // setPomodoro() {
-    //     this.setTimes(25, 5);
-    //     this.isFocusing = true;
-    //     this.remainingTime = this.focusTime;
-    //     this.currentSessionTotalTime = this.focusTime;
-    // }
 
     start() {
         if (this.intervalId !== null) return;
@@ -174,7 +166,7 @@ class Timer {
 }
 
 // ===============================================
-// 3. UserInterface ƒNƒ‰ƒX
+// 3. UserInterface ã‚¯ãƒ©ã‚¹
 // ===============================================
 class UserInterface {
     constructor() {
@@ -184,8 +176,7 @@ class UserInterface {
         this.resetButton = document.getElementById('reset-button');
         this.focusTimeInput = document.getElementById('focus-time');
         this.enableBreakCheckbox = document.getElementById('enable-break');
-        // pomodoroPresetButton ‚Ìæ“¾‚Í•s—v‚É‚È‚Á‚½‚½‚ßíœ
-        // this.pomodoroPresetButton = document.getElementById('pomodoro-preset'); 
+        // pomodoroPresetButton ã®å–å¾—ã¯ä¸è¦ã«ãªã£ãŸãŸã‚å‰Šé™¤
 
         this.longTermGoalInput = document.getElementById('long-term-goal');
         this.saveTasksButton = document.getElementById('save-tasks-button');
@@ -259,21 +250,19 @@ class UserInterface {
     disableTimeInputs() {
         this.focusTimeInput.disabled = true;
         this.enableBreakCheckbox.disabled = true;
-        // pomodoroPresetButton ‚Ì disable İ’è‚Í•s—v‚É‚È‚Á‚½‚½‚ßíœ
-        // this.pomodoroPresetButton.disabled = true;
+        // pomodoroPresetButton ã® disable è¨­å®šã¯ä¸è¦ã«ãªã£ãŸãŸã‚å‰Šé™¤
     }
 
     enableTimeInputs() {
         this.focusTimeInput.disabled = false;
-        // pomodoroPresetButton ‚Ì enable İ’è‚Í•s—v‚É‚È‚Á‚½‚½‚ßíœ
-        // this.pomodoroPresetButton.disabled = false;
-        // enableBreakCheckbox ‚Ì disabled ó‘Ô‚Í updateTimerSettings ‚Å§Œä‚³‚ê‚é‚½‚ßA‚±‚±‚Å‚Í•ÏX‚µ‚È‚¢
+        // pomodoroPresetButton ã® enable è¨­å®šã¯ä¸è¦ã«ãªã£ãŸãŸã‚å‰Šé™¤
+        // enableBreakCheckbox ã® disabled ã¯ updateTimerSettings ã§åˆ¶å¾¡ã•ã‚Œã‚‹ãŸã‚ã€ã“ã“ã§ã¯å¤‰æ›´ã—ãªã„
     }
 
     renderTaskList(tasks, onDelete, onToggle) {
         this.taskListContainer.innerHTML = '';
         if (tasks.length === 0) {
-            this.taskListContainer.innerHTML = '<p style="text-align: center; color: #888;">ƒ^ƒXƒN‚ª‚ ‚è‚Ü‚¹‚ñB</p>';
+            this.taskListContainer.innerHTML = '<p style="text-align: center; color: #888;">ã‚¿ã‚¹ã‚¯ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚</p>';
             return;
         }
         tasks.forEach((task, index) => {
@@ -292,7 +281,7 @@ class UserInterface {
             }
 
             const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'íœ';
+            deleteButton.textContent = 'å‰Šé™¤';
             deleteButton.addEventListener('click', () => onDelete(index));
 
             taskItem.appendChild(checkbox);
@@ -311,7 +300,7 @@ class UserInterface {
     }
 
     renderCalendar(year, month, focusRecords) {
-        this.calendarHeader.textContent = `${year}”N ${month + 1}Œ`;
+        this.calendarHeader.textContent = `${year}å¹´ ${month + 1}æœˆ`;
         while (this.calendarGrid.children.length > 7) {
             this.calendarGrid.removeChild(this.calendarGrid.lastChild);
         }
@@ -350,7 +339,7 @@ class UserInterface {
             if (record && record.totalMinutes > 0) {
                 const focusMinutesSpan = document.createElement('span');
                 focusMinutesSpan.classList.add('focus-minutes');
-                focusMinutesSpan.textContent = `${record.totalMinutes}•ª`;
+                focusMinutesSpan.textContent = `${record.totalMinutes}åˆ†`;
                 dayCell.appendChild(focusMinutesSpan);
             }
 
@@ -360,7 +349,7 @@ class UserInterface {
 }
 
 // ===============================================
-// 4. FocusRecordManager ƒNƒ‰ƒX
+// 4. FocusRecordManager ã‚¯ãƒ©ã‚¹
 // ===============================================
 class FocusRecordManager {
     constructor() {
@@ -403,7 +392,7 @@ class FocusRecordManager {
 }
 
 // ===============================================
-// 5. TaskGoalManager ƒNƒ‰ƒX
+// 5. TaskGoalManager ã‚¯ãƒ©ã‚¹
 // ===============================================
 class TaskGoalManager {
     constructor() {
@@ -463,7 +452,7 @@ class TaskGoalManager {
 }
 
 // ===============================================
-// 6. App ƒNƒ‰ƒX (ƒƒCƒ“ƒƒWƒbƒN - “®“IƒV[ƒPƒ“ƒX¶¬‚Ì§Œä)
+// 6. App ã‚¯ãƒ©ã‚¹ (ãƒ¡ã‚¤ãƒ³ãƒ­ã‚¸ãƒƒã‚¯ - ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ãƒ¢ãƒ¼ãƒ‰å¯¾å¿œ)
 // ===============================================
 class App {
     constructor() {
@@ -478,7 +467,7 @@ class App {
     init() {
         this.setupEventListeners();
         this.loadInitialData();
-        // ƒAƒvƒŠ‰Šú‰»‚ÉAŒ»İ‚ÌUIİ’è‚ğTimer‚É”½‰f‚³‚¹Aƒ^ƒCƒ}[‚ğƒŠƒZƒbƒg‚·‚é
+        // ã‚¢ãƒ—ãƒªèµ·å‹•æ™‚ã«ã€ç¾åœ¨ã®UIè¨­å®šã‚’Timerã«åæ˜ ã—ã€ã‚¿ã‚¤ãƒãƒ¼ã‚’ãƒªã‚»ãƒƒãƒˆã™ã‚‹
         this.updateTimerSettings(true);
         this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
         this.renderTasks();
@@ -491,33 +480,32 @@ class App {
         this.ui.stopButton.addEventListener('click', () => this.stopSession());
         this.ui.resetButton.addEventListener('click', () => this.resetSession());
 
-        // W’†ŠÔ“ü—Í‚Æ‹xŒeƒ`ƒFƒbƒNƒ{ƒbƒNƒX‚Ì•ÏXƒCƒxƒ“ƒg
-        // ‚±‚ê‚ç‚Ì•ÏX‚ÍAƒ^ƒCƒ}[‚ªˆê’â~’†‚Ìê‡‚É‚Ì‚İV‚µ‚¢İ’è‚ğƒ^ƒCƒ}[‚É”½‰f‚µAƒŠƒZƒbƒg‚µ‚Ü‚·B
+        // é›†ä¸­æ™‚é–“å…¥åŠ›ã¨ä¼‘æ†©ãƒã‚§ãƒƒã‚¯ãƒœãƒƒã‚¯ã‚¹ã®å¤‰æ›´ã‚¤ãƒ™ãƒ³ãƒˆ
+        // ã“ã‚Œã‚‰ã®å¤‰æ›´ã¯ã€ã‚¿ã‚¤ãƒãƒ¼ãŒä¸€æ™‚åœæ­¢ã—ã¦ã„ã‚‹å ´åˆã«ã®ã¿æ–°ã—ã„è¨­å®šã‚’ã‚¿ã‚¤ãƒãƒ¼ã«åæ˜ ã—ã€ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚
         this.ui.focusTimeInput.addEventListener('change', () => this.handleTimerSettingsChange());
         this.ui.enableBreakCheckbox.addEventListener('change', () => this.handleTimerSettingsChange());
-        // pomodoroPresetButton ‚ÌƒCƒxƒ“ƒgƒŠƒXƒi[‚Í•s—v‚É‚È‚Á‚½‚½‚ßíœ
 
         this.timer.onTick = (remainingTime) => {
             this.updateTimerDisplay(remainingTime, this.timer.getIsFocusing());
             const total = this.timer.getCurrentSessionTotalTime();
-            // 0œZ‚ğ–h‚®
+            // 0é™¤ç®—å›é¿
             this.ui.updateProgressBar(total > 0 ? remainingTime / total : 0);
         };
 
         this.timer.onComplete = (sessionWasFocusing) => {
             if (sessionWasFocusing === true) {
-                // ƒV[ƒPƒ“ƒX‚Ìê‡AŠeW’†ŠÔ‚Ì‹L˜^‚Å‚Í‚È‚­Aİ’è‚³‚ê‚½W’†ŠÔ‚ğ‹L˜^‚µ‚Ü‚·
+                // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ã®å ´åˆã€å„é›†ä¸­æ™‚é–“ã®è¨˜éŒ²ã§ã¯ãªãã€è¨­å®šã•ã‚ŒãŸé›†ä¸­æ™‚é–“ã‚’è¨˜éŒ²ã—ã¾ã™
                 const focusMinutes = this.ui.getFocusTimeInput();
                 this.focusRecordManager.addFocusMinutes(focusMinutes);
                 this.renderCalendar();
-                alert('W’†ƒZƒbƒVƒ‡ƒ“‚ªŠ®—¹‚µ‚Ü‚µ‚½I');
+                alert('é›†ä¸­ã‚»ãƒƒã‚·ãƒ§ãƒ³ãŒçµ‚äº†ã—ã¾ã—ãŸï¼');
             } else if (sessionWasFocusing === false) {
-                alert('‹xŒeƒZƒbƒVƒ‡ƒ“‚ªŠ®—¹‚µ‚Ü‚µ‚½I');
+                alert('ä¼‘æ†©ã‚»ãƒƒã‚·ãƒ§ãƒ³ãŒçµ‚äº†ã—ã¾ã—ãŸï¼');
             }
         };
 
         this.timer.onSequenceComplete = () => {
-            alert('‚·‚×‚Ä‚ÌƒZƒbƒVƒ‡ƒ“‚ªŠ®—¹‚µ‚Ü‚µ‚½I');
+            alert('å…¨ã¦ã®ã‚»ãƒƒã‚·ãƒ§ãƒ³ãŒçµ‚äº†ã—ã¾ã—ãŸï¼');
             this.resetSession();
         };
 
@@ -539,10 +527,10 @@ class App {
         this.focusRecordManager.loadRecords();
     }
 
-    // ƒ^ƒCƒ}[İ’è‚ª•ÏX‚³‚ê‚½‚Æ‚«‚Ì‹¤’Êƒnƒ“ƒhƒ‰
+    // ã‚¿ã‚¤ãƒãƒ¼è¨­å®šãŒå¤‰æ›´ã•ã‚ŒãŸã¨ãã®å…±é€šãƒãƒ³ãƒ‰ãƒ©
     handleTimerSettingsChange() {
-        if (this.timer.getIsPaused()) { // ƒ^ƒCƒ}[‚ªˆê’â~’†‚Ü‚½‚Í‰Šúó‘Ô‚Ìê‡‚Ì‚İ
-            this.updateTimerSettings(true); // ƒ^ƒCƒ}[‚ğƒŠƒZƒbƒg‚µ‚ÄUIİ’è‚ğ“K—p
+        if (this.timer.getIsPaused()) { // ã‚¿ã‚¤ãƒãƒ¼ãŒä¸€æ™‚åœæ­¢ã¾ãŸã¯åˆæœŸçŠ¶æ…‹ã®å ´åˆã®ã¿
+            this.updateTimerSettings(true); // ã‚¿ã‚¤ãƒãƒ¼ã‚’ãƒªã‚»ãƒƒãƒˆã—ã¦UIè¨­å®šã‚’é©ç”¨
             this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
             this.ui.updateProgressBar(1);
         }
@@ -550,74 +538,61 @@ class App {
 
     startSession() {
         if (!this.timer.getIsPaused()) {
-            return; // ‚·‚Å‚É“®ì’†‚È‚ç‰½‚à‚µ‚È‚¢
+            return; // ã™ã§ã«ç¨¼åƒä¸­ãªã‚‰ä½•ã‚‚ã—ãªã„
         }
 
-        // ƒ^ƒCƒ}[‚ªˆê’â~’†‚Ìê‡‚Å‚àAUI‚Ìİ’è’l‚ª•ÏX‚³‚ê‚Ä‚¢‚È‚¢‚©‚ğŠm”F
-        // •ÏX‚³‚ê‚Ä‚¢‚È‚¯‚ê‚ÎA‚»‚Ì‚Ü‚ÜÄŠJ
-        // •ÏX‚³‚ê‚Ä‚¢‚ê‚ÎAresetSessionŒo—R‚ÅŒ»İ‚ÌUIİ’è‚ğ”½‰f‚³‚¹‚é
-        const currentFocusTimeInSeconds = this.ui.getFocusTimeInput() * 60;
-        const currentIsBreakEnabled = this.ui.isBreakEnabled();
-
-        // ƒ^ƒCƒ}[İ’è‚ª•ÏX‚³‚ê‚½‚©‚Ç‚¤‚©‚Ì”»’èƒƒWƒbƒN‚ğ‚æ‚èŒ˜˜S‚É
+        // ã‚¿ã‚¤ãƒãƒ¼ãŒä¸€æ™‚åœæ­¢ã—ã¦ã„ã‚‹å ´åˆã§ã‚‚ã€UIã®è¨­å®šå€¤ãŒå¤‰æ›´ã•ã‚Œã¦ã„ãªã„ã‹ç¢ºèª
+        // å¤‰æ›´ã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ã€resetSessionã‚’å‘¼ã³å‡ºã—ã¦ç¾åœ¨ã®UIè¨­å®šã§å†é–‹
         let isTimerSettingsActuallyChanged = false;
-        if (this.timer.sessionSequence === null) { // ’Êíƒ‚[ƒh‚Ìê‡
-            if (this.timer.initialFocusTime !== currentFocusTimeInSeconds) {
+        if (this.timer.sessionSequence === null) { // é€šå¸¸ãƒ¢ãƒ¼ãƒ‰ã®å ´åˆ
+            // focusTimeInputã®ç¾åœ¨ã®å€¤ï¼ˆåˆ†ï¼‰ã¨ã€ã‚¿ã‚¤ãƒãƒ¼ã«è¨­å®šã•ã‚Œã¦ã„ã‚‹æœ€åˆã®ãƒ•ã‚©ãƒ¼ã‚«ã‚¹æ™‚é–“ï¼ˆç§’ï¼‰ã‚’æ¯”è¼ƒ
+            if (this.ui.getFocusTimeInput() * 60 !== this.timer.initialFocusTime ||
+                this.ui.isBreakEnabled() !== (this.timer.initialBreakTime > 0)) {
                 isTimerSettingsActuallyChanged = true;
             }
-            // ’Êíƒ‚[ƒh‚©‚çƒV[ƒPƒ“ƒXƒ‚[ƒh‚ÉØ‚è‘Ö‚í‚éğŒ‚ª¬—§‚µ‚½‚©
-            if (!this.timer.sessionSequence && currentIsBreakEnabled && currentFocusTimeInSeconds > 25 * 60) {
-                // ‚½‚¾‚µAŠù‚É‚»‚Ìİ’è‚Å‰Šú‰»‚³‚ê‚Ä‚¢‚éê‡‚Í•ÏX‚Æ‚Í‚İ‚È‚³‚È‚¢
-                // (‚±‚ê‚ÍupdateTimerSettings‚ªshouldResetTimer=true‚Ì‚É‚Ì‚İsetTimes/setSessionSequence‚ğŒÄ‚Ô‚±‚Æ‚ÅƒJƒo[‚³‚ê‚é)
-            }
-        } else { // ƒV[ƒPƒ“ƒXƒ‚[ƒh‚Ìê‡
-            // ƒV[ƒPƒ“ƒX‚ÌÅ‰‚ÌƒZƒbƒVƒ‡ƒ“‚ªŒ»İ‚ÌUIİ’è‚Æˆê’v‚µ‚È‚¢ê‡‚ğl—¶
-            const firstSessionDuration = this.timer.sessionSequence[0].duration;
-            const firstSessionType = this.timer.sessionSequence[0].type;
-            const expectedFirstSessionType = (currentIsBreakEnabled && currentFocusTimeInSeconds > 25 * 60) ? 'focus' : 'focus'; // ƒV[ƒPƒ“ƒX‚ÌÅ‰í‚ÉW’†
-
-            // Œ»İ‚ÌUI‚ÌW’†ŠÔ‚ªƒV[ƒPƒ“ƒX‚Ì‡Œv‚Æˆê’v‚µ‚È‚¢A‚Ü‚½‚Í‹xŒeİ’è‚ª•Ï‚í‚Á‚½ê‡
+        } else { // ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ãƒ¢ãƒ¼ãƒ‰ã®å ´åˆ
+            // ç¾åœ¨ã®UIã®é›†ä¸­æ™‚é–“åˆè¨ˆãŒã€ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ã®åˆè¨ˆé›†ä¸­æ™‚é–“ã¨ç•°ãªã‚‹å ´åˆ
             const totalMinutesInSequence = this.timer.sessionSequence.reduce((sum, s) => sum + (s.type === 'focus' ? s.duration : 0), 0) / 60;
             if (totalMinutesInSequence !== this.ui.getFocusTimeInput() ||
-                (this.timer.sessionSequence.some(s => s.type === 'break') !== currentIsBreakEnabled)) {
+                (this.timer.sessionSequence.some(s => s.type === 'break') !== this.ui.isBreakEnabled())) {
                 isTimerSettingsActuallyChanged = true;
             }
         }
 
         if (this.timer.getRemainingTime() <= 0 || isTimerSettingsActuallyChanged) {
-            // ŠÔ‚ª0‚É‚È‚Á‚Ä‚¢‚é‚©A‚Ü‚½‚Íİ’è‚ª•ÏX‚³‚ê‚Ä‚¢‚éê‡‚ÍƒŠƒZƒbƒg‚µ‚ÄŠJn
+            // æ™‚é–“ãŒ0ã«ãªã£ã¦ã„ã‚‹ã‹ã€ã¾ãŸã¯è¨­å®šãŒå¤‰æ›´ã•ã‚Œã¦ã„ã‚‹å ´åˆã€ãƒªã‚»ãƒƒãƒˆã—ã¦ã‹ã‚‰é–‹å§‹
             this.resetSession();
         }
 
         this.ui.disableStartButton();
         this.ui.enableStopButton();
-        this.ui.disableTimeInputs(); // ƒ^ƒCƒ}[“®ì’†‚Íİ’è•ÏX‚ğ•s‰Â‚É‚·‚é
+        this.ui.disableTimeInputs(); // ã‚¿ã‚¤ãƒãƒ¼ç¨¼åƒä¸­ã¯è¨­å®šå¤‰æ›´ã‚’ä¸å¯ã«ã™ã‚‹
         this.timer.start();
     }
 
     stopSession() {
         if (this.timer.getIsPaused()) {
-            return; // ‚·‚Å‚É’â~’†‚È‚ç‰½‚à‚µ‚È‚¢
+            return; // ã™ã§ã«åœæ­¢ä¸­ãªã‚‰ä½•ã‚‚ã—ãªã„
         }
         this.timer.pause();
         this.ui.enableStartButton();
-        this.ui.enableStopButton(); // ’â~Œã‚ÍŠJn‚Å‚«‚é‚æ‚¤Aƒ{ƒ^ƒ“‚Í—LŒø‚Ì‚Ü‚Ü
-        this.ui.enableTimeInputs(); // İ’è•ÏX‚ğÄ‚Ñ‰Â”\‚É‚·‚é
+        this.ui.enableStopButton(); // åœæ­¢å¾Œã‚‚å†é–‹ã§ãã‚‹ã‚ˆã†ã€ãƒœã‚¿ãƒ³ã¯æœ‰åŠ¹ã®ã¾ã¾
+        this.ui.enableTimeInputs(); // è¨­å®šå¤‰æ›´ã‚’å¯èƒ½ã«ã™ã‚‹
     }
 
     resetSession() {
-        this.timer.reset(); // TimerƒNƒ‰ƒX‚Ìresetƒƒ\ƒbƒh‚ª“à•”ó‘Ô‚ğ‰Šú‰»
-        this.updateTimerSettings(true); // UI‚Ìİ’è’l‚É‡‚í‚¹‚ÄTimer‚ğƒŠƒZƒbƒgid—vj
+        this.timer.reset(); // Timerã‚¯ãƒ©ã‚¹ã®resetãƒ¡ã‚½ãƒƒãƒ‰ãŒå†…éƒ¨çŠ¶æ…‹ã‚’ãƒªã‚»ãƒƒãƒˆ
+        this.updateTimerSettings(true); // UIã®è¨­å®šå€¤ã«åˆã‚ã›ã¦Timerã‚’å†è¨­å®šï¼ˆé‡è¦ï¼‰
         this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
         this.ui.updateProgressBar(1);
         this.ui.enableStartButton();
-        this.ui.disableStopButton(); // ƒŠƒZƒbƒgŒã‚Ístop‚Í–³Œø
+        this.ui.disableStopButton(); // ãƒªã‚»ãƒƒãƒˆå¾Œã¯stopã¯ä¸è¦
         this.ui.enableTimeInputs();
     }
 
     /**
-     * ƒ^ƒCƒ}[‚Ìİ’è‚ğXV‚µA•K—v‚Å‚ ‚ê‚Îƒ^ƒCƒ}[‚ğƒŠƒZƒbƒg‚µ‚Ü‚·B
-     * @param {boolean} shouldResetTimer - true‚Ìê‡Aƒ^ƒCƒ}[‚ğŒ»İ‚ÌUIİ’è‚ÅƒŠƒZƒbƒg‚µ‚Ü‚·B
+     * ã‚¿ã‚¤ãƒãƒ¼ã®è¨­å®šã‚’æ›´æ–°ã—ã€å¿…è¦ã§ã‚ã‚Œã°ã‚¿ã‚¤ãƒãƒ¼ã‚’ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚
+     * @param {boolean} shouldResetTimer - trueã®å ´åˆã€ã‚¿ã‚¤ãƒãƒ¼ã‚’ç¾åœ¨ã®UIè¨­å®šã§ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚
      */
     updateTimerSettings(shouldResetTimer = false) {
         let focusMinutes = this.ui.getFocusTimeInput();
@@ -626,15 +601,15 @@ class App {
         const baseFocusTime = 25;
         const baseBreakTime = 5;
 
-        // ƒ‹[ƒ‹1: W’†ŠÔ‚ª25•ªˆÈ‰º‚ÌA‹xŒe‚Í‘I‘ğ‚Å‚«‚È‚¢ (UIã‚Ì‹““®)
+        // ãƒ«ãƒ¼ãƒ«1: é›†ä¸­æ™‚é–“ãŒ25åˆ†ä»¥ä¸‹ã®é–“ã¯ã€ä¼‘æ†©ã¯é¸æŠä¸å¯ (UIå´ã®åˆ¶å¾¡)
         if (focusMinutes <= baseFocusTime) {
             this.ui.setBreakCheckboxDisabled(true);
             this.ui.setBreakEnabled(false);
             if (shouldResetTimer) {
-                this.timer.setTimes(focusMinutes, 0); // ‹xŒe‚È‚µ(0•ª)‚ğİ’è
+                this.timer.setTimes(focusMinutes, 0); // ä¼‘æ†©ãªã—(0åˆ†)ã«è¨­å®š
             }
         }
-        // ƒ‹[ƒ‹2: W’†ŠÔ‚ª25•ª‚æ‚è’·‚­A‚©‚Â‹xŒe‚ ‚è‚ğ‘I‘ğ‚µ‚Ä‚¢‚éê‡A“®“I‚ÈƒV[ƒPƒ“ƒX‚ğİ’è
+        // ãƒ«ãƒ¼ãƒ«2: é›†ä¸­æ™‚é–“ãŒ25åˆ†ã‚’è¶…ãˆã€ã‹ã¤ä¼‘æ†©ãŒé¸æŠã•ã‚Œã¦ã„ã‚‹å ´åˆã€ã‚·ãƒ¼ã‚±ãƒ³ã‚¹ã‚’è¨­å®š
         else if (focusMinutes > baseFocusTime && isBreakEnabled) {
             const sequence = [];
             let remainingFocusTime = focusMinutes;
@@ -642,11 +617,11 @@ class App {
             while (remainingFocusTime >= baseFocusTime) {
                 sequence.push({ type: 'focus', duration: baseFocusTime });
                 remainingFocusTime -= baseFocusTime;
-                if (remainingFocusTime > 0) { // ÅŒã‚ÌW’†ƒZƒbƒVƒ‡ƒ“‚ÌŒã‚É‹xŒe‚Í“ü‚ê‚È‚¢
+                if (remainingFocusTime > 0) { // æœ€å¾Œã®é›†ä¸­ã‚»ãƒƒã‚·ãƒ§ãƒ³ã®å¾Œã«ä¼‘æ†©ã¯ãªã—
                     sequence.push({ type: 'break', duration: baseBreakTime });
                 }
             }
-            if (remainingFocusTime > 0) { // c‚è‚ÌW’†ŠÔ‚ª‚ ‚éê‡
+            if (remainingFocusTime > 0) { // æ®‹ã‚Šã®é›†ä¸­æ™‚é–“ãŒã‚ã‚‹å ´åˆ
                 sequence.push({ type: 'focus', duration: remainingFocusTime });
             }
 
@@ -656,23 +631,20 @@ class App {
             this.ui.setBreakCheckboxDisabled(false);
             this.ui.setBreakEnabled(true);
         }
-        // ƒ‹[ƒ‹3: W’†ŠÔ‚ª25•ª‚æ‚è’·‚­A‚©‚Â‹xŒe‚È‚µ‚ğ‘I‘ğ‚µ‚Ä‚¢‚éê‡
+        // ãƒ«ãƒ¼ãƒ«3: é›†ä¸­æ™‚é–“ãŒ25åˆ†ã‚’è¶…ãˆã€ã‹ã¤ä¼‘æ†©ãŒé¸æŠã•ã‚Œã¦ã„ãªã„å ´åˆ
         else if (focusMinutes > baseFocusTime && !isBreakEnabled) {
             this.ui.setBreakCheckboxDisabled(false);
             this.ui.setBreakEnabled(false);
             if (shouldResetTimer) {
-                this.timer.setTimes(focusMinutes, 0); // W’†ŠÔ‚Ì‚İ‚ğİ’è
+                this.timer.setTimes(focusMinutes, 0); // é›†ä¸­æ™‚é–“ã®ã¿è¨­å®š
             }
         }
-        // updateTimerDisplay ‚Æ updateProgressBar ‚ÍŒÄ‚Ño‚µŒ³‚Å§Œä
     }
-
-    // setPomodoroPreset() ƒƒ\ƒbƒh‚Ííœ‚³‚ê‚Ü‚µ‚½
 
     saveTasksAndGoals() {
         this.taskGoalManager.setLongTermGoal(this.ui.getLongTermGoal());
         this.taskGoalManager.saveTasksAndGoal();
-        alert('ƒ^ƒXƒN‚Æ–Ú•W‚ğ•Û‘¶‚µ‚Ü‚µ‚½I');
+        alert('ã‚¿ã‚¹ã‚¯ã¨é•·æœŸç›®æ¨™ã‚’ä¿å­˜ã—ã¾ã—ãŸï¼');
     }
 
     updateTimerDisplay(seconds, isFocusing) {
