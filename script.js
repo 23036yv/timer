@@ -598,7 +598,7 @@ class App {
         let focusMinutes = this.ui.getFocusTimeInput();
         let isBreakEnabled = this.ui.isBreakEnabled();
 
-        const baseFocusTime = 2;
+        const baseFocusTime = 3;
         const baseBreakTime = 1;
 
         // ルール1: 集中時間が25分以下の間は、休憩は選択不可 (UI側の制御)
