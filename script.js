@@ -495,8 +495,8 @@ class App {
         this.timer.onComplete = (sessionWasFocusing) => {
             if (sessionWasFocusing === true) {
                 // シーケンスの場合、各集中時間の記録ではなく、設定された集中時間を記録します
-                const focusMinutes = this.ui.getFocusTimeInput();
-                this.focusRecordManager.addFocusMinutes(focusMinutes);
+                const completedFocusMinutes = Math.floor(this.timer.currentSessionTotalTime / 60);
+                this.focusRecordManager.addFocusMinutes(completedFocusMinutes);
                 this.renderCalendar();
                 alert('集中セッションが終了しました！');
             } else if (sessionWasFocusing === false) {
@@ -598,8 +598,8 @@ class App {
         let focusMinutes = this.ui.getFocusTimeInput();
         let isBreakEnabled = this.ui.isBreakEnabled();
 
-        const baseFocusTime = 25;
-        const baseBreakTime = 5;
+        const baseFocusTime = 2;
+        const baseBreakTime = 1;
 
         // ルール1: 集中時間が25分以下の間は、休憩は選択不可 (UI側の制御)
         if (focusMinutes <= baseFocusTime) {
