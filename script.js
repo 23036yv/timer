@@ -1,6 +1,8 @@
 // ===============================================
 // 1. StorageManager クラス
 // ===============================================
+// StorageManager は、直接 LocalStorage を操作する静的ユーティリティクラスです。
+// テスト時にモックしやすいように、StorageManager を介して LocalStorage にアクセスします。
 class StorageManager {
     static save(key, data) {
         try {
@@ -32,10 +34,16 @@ class StorageManager {
 // ===============================================
 // 2. Timer クラス
 // ===============================================
+// Timer クラスは、ポモドーロタイマーのコアロジックを管理します。
 class Timer {
-    constructor(focusTimeMinutes = 25, breakTimeMinutes = 5) {
-        this.initialFocusTime = focusTimeMinutes * 60; // 秒に変換
-        this.initialBreakTime = breakTimeMinutes * 60; // 秒に変換
+    constructor(onTick, onComplete, onSequenceComplete) {
+        this.onTick = onTick; // 1秒ごとに呼ばれるコールバック
+        this.onComplete = onComplete; // 一つのセッションが終了したときに呼ばれるコールバック (集中/休憩)
+        this.onSequenceComplete = onSequenceComplete; // シーケンス全体が終了したときに呼ばれるコールバック
+
+        this.initialFocusTime = 25 * 60; // デフォルトの集中時間（秒）
+        this.initialBreakTime = 5 * 60; // デフォルトの休憩時間（秒）
+
         this.focusTime = this.initialFocusTime;
         this.breakTime = this.initialBreakTime;
         this.isFocusing = true; // 現在フォーカスセッション中か休憩セッション中か
@@ -43,16 +51,12 @@ class Timer {
         this.currentSessionTotalTime = this.focusTime; // 現在のセッションの合計時間（プログレスバー用）
         this.intervalId = null;
         this.isPaused = true;
-        this.totalFocusDuration = null;
-        this.elapsedFocusTime = 0;
+
+        this.elapsedFocusTime = 0; // その日の累計集中時間（秒）
 
         // シーケンス関連のプロパティ
         this.sessionSequence = null; // 例: [{ type: 'focus', duration: 25 }, { type: 'break', duration: 5 }]
         this.currentSessionIndex = 0;
-
-        this.onTick = () => { }; // 1秒ごとに呼ばれるコールバック
-        this.onComplete = () => { }; // 一つのセッションが終了したときに呼ばれるコールバック (集中/休憩)
-        this.onSequenceComplete = () => { }; // シーケンス全体が終了したときに呼ばれるコールバック
     }
 
     // 通常の単一サイクル設定
@@ -75,6 +79,7 @@ class Timer {
     setSessionSequence(sequence) {
         this.sessionSequence = sequence.map(s => ({ ...s, duration: s.duration * 60 })); // 秒に変換
         this.currentSessionIndex = 0;
+        // シーケンスの最初のセッションの種類に基づいて isFocusing を設定
         this.isFocusing = (this.sessionSequence[0].type === 'focus');
         this.remainingTime = this.sessionSequence[0].duration;
         this.currentSessionTotalTime = this.remainingTime;
@@ -87,31 +92,34 @@ class Timer {
         this.isPaused = false;
         this.intervalId = setInterval(() => {
             this.remainingTime--;
-            if (this.isFocusing && this.totalFocusDuration !== null) {
+            if (this.isFocusing) { // 集中セッション中のみ経過時間をカウント
                 this.elapsedFocusTime++;
             }
-            this.onTick(this.remainingTime);
+            this.onTick(this.remainingTime, this.isFocusing); // UI更新コールバック
 
             if (this.remainingTime <= 0) {
                 this.pause();
-                const sessionWasFocusing = this.isFocusing;
+                const sessionWasFocusing = this.isFocusing; // セッション完了時の種類を保持
 
-                this.onComplete(sessionWasFocusing);
+                this.onComplete(sessionWasFocusing); // セッション完了コールバック
 
                 if (this.sessionSequence) {
                     this.currentSessionIndex++;
                     if (this.currentSessionIndex < this.sessionSequence.length) {
+                        // 次のセッションへ
                         const nextSession = this.sessionSequence[this.currentSessionIndex];
                         this.isFocusing = (nextSession.type === 'focus');
                         this.remainingTime = nextSession.duration;
                         this.currentSessionTotalTime = this.remainingTime;
-                        this.start();
+                        this.start(); // 次のセッションを開始
                     } else {
+                        // シーケンス全体が終了
                         this.onSequenceComplete();
-                        this.sessionSequence = null;
+                        this.sessionSequence = null; // シーケンスモードを解除
                         this.currentSessionIndex = 0;
                     }
                 } else {
+                    // 通常モードの場合、集中と休憩を切り替え
                     this.isFocusing = !this.isFocusing;
                     this.remainingTime = this.isFocusing ? this.focusTime : this.breakTime;
                     this.currentSessionTotalTime = this.remainingTime;
@@ -130,22 +138,23 @@ class Timer {
     reset() {
         this.pause();
         this.elapsedFocusTime = 0;
-        this.totalFocusDuration = null;
 
         if (this.sessionSequence) {
+            // シーケンスモードの場合、最初のセッションに戻る
             this.currentSessionIndex = 0;
             const firstSession = this.sessionSequence[0];
             this.isFocusing = (firstSession.type === 'focus');
             this.remainingTime = firstSession.duration;
             this.currentSessionTotalTime = this.remainingTime;
         } else {
+            // 通常モードの場合、初期集中時間に戻る
             this.isFocusing = true;
             this.focusTime = this.initialFocusTime;
             this.breakTime = this.initialBreakTime;
             this.remainingTime = this.focusTime;
             this.currentSessionTotalTime = this.focusTime;
         }
-        this.onTick(this.remainingTime);
+        this.onTick(this.remainingTime, this.isFocusing); // UIを初期状態に更新
     }
 
     getRemainingTime() {
@@ -161,30 +170,75 @@ class Timer {
     }
 
     getCurrentSessionTotalTime() {
-        return this.currentSessionTotalTime;
+        // 現在のセッション（集中または休憩）の合計時間を返す
+        // シーケンスモードの場合は現在のシーケンスアイテムのduration
+        if (this.sessionSequence && this.sessionSequence[this.currentSessionIndex]) {
+            return this.sessionSequence[this.currentSessionIndex].duration;
+        }
+        return this.isFocusing ? this.focusTime : this.breakTime;
+    }
+
+    // 新規追加: 現在のタイマー状態を取得する
+    getState() {
+        return {
+            remainingTime: this.remainingTime,
+            isFocusing: this.isFocusing,
+            isPaused: this.isPaused,
+            initialFocusTime: this.initialFocusTime,
+            initialBreakTime: this.initialBreakTime,
+            focusTime: this.focusTime, // 現在設定されている集中時間
+            breakTime: this.breakTime, // 現在設定されている休憩時間
+            sessionSequence: this.sessionSequence,
+            currentSessionIndex: this.currentSessionIndex,
+            elapsedFocusTime: this.elapsedFocusTime
+        };
+    }
+
+    // 新規追加: タイマー状態を設定する
+    setState(state) {
+        if (state) {
+            this.remainingTime = state.remainingTime;
+            this.isFocusing = state.isFocusing;
+            this.isPaused = state.isPaused; // 保存された一時停止状態をセット
+            this.initialFocusTime = state.initialFocusTime || 25 * 60;
+            this.initialBreakTime = state.initialBreakTime || 5 * 60;
+            this.focusTime = state.focusTime || this.initialFocusTime;
+            this.breakTime = state.breakTime || this.initialBreakTime;
+            this.sessionSequence = state.sessionSequence;
+            this.currentSessionIndex = state.currentSessionIndex; // 'currentSequenceIndex' から 'currentSessionIndex' に修正
+            this.elapsedFocusTime = state.elapsedFocusTime;
+
+            // プログレスバーの計算用に currentSessionTotalTime を再設定
+            if (this.sessionSequence && this.sessionSequence[this.currentSessionIndex]) {
+                this.currentSessionTotalTime = this.sessionSequence[this.currentSessionIndex].duration;
+            } else {
+                this.currentSessionTotalTime = this.isFocusing ? this.focusTime : this.breakTime;
+            }
+
+            // UIを更新
+            this.onTick(this.remainingTime, this.isFocusing);
+        }
     }
 }
 
 // ===============================================
 // 3. UserInterface クラス
 // ===============================================
+// UserInterface クラスは、DOM要素へのアクセスとUIの更新を担当します。
 class UserInterface {
     constructor() {
         this.timerDisplay = document.getElementById('timer-display');
+        this.progressBar = document.getElementById('progress-bar');
+        this.focusTimeInput = document.getElementById('focus-time');
+        this.enableBreakCheckbox = document.getElementById('enable-break');
         this.startButton = document.getElementById('start-button');
         this.stopButton = document.getElementById('stop-button');
         this.resetButton = document.getElementById('reset-button');
-        this.focusTimeInput = document.getElementById('focus-time');
-        this.enableBreakCheckbox = document.getElementById('enable-break');
-        // pomodoroPresetButton の取得は不要になったため削除
-
         this.longTermGoalInput = document.getElementById('long-term-goal');
         this.saveTasksButton = document.getElementById('save-tasks-button');
-        this.progressBar = document.getElementById('progress-bar');
         this.taskListContainer = document.getElementById('task-list');
         this.newTaskInput = document.getElementById('new-task-input');
         this.addTaskButton = document.getElementById('add-task-button');
-
         this.calendarHeader = document.getElementById('current-month-year');
         this.prevMonthButton = document.getElementById('prev-month');
         this.nextMonthButton = document.getElementById('next-month');
@@ -200,7 +254,7 @@ class UserInterface {
     }
 
     updateProgressBar(progress) {
-        this.progressBar.style.width = `${progress * 100}%`;
+        this.progressBar.style.width = `${progress}%`; // progressは0-100の数値
     }
 
     getFocusTimeInput() {
@@ -231,32 +285,18 @@ class UserInterface {
         this.longTermGoalInput.value = goal;
     }
 
-    disableStartButton() {
-        this.startButton.disabled = true;
+    setStartButtonEnabled(enabled) {
+        this.startButton.disabled = !enabled;
     }
 
-    enableStartButton() {
-        this.startButton.disabled = false;
+    setStopButtonEnabled(enabled) {
+        this.stopButton.disabled = !enabled;
     }
 
-    disableStopButton() {
-        this.stopButton.disabled = true;
-    }
-
-    enableStopButton() {
-        this.stopButton.disabled = false;
-    }
-
-    disableTimeInputs() {
-        this.focusTimeInput.disabled = true;
-        this.enableBreakCheckbox.disabled = true;
-        // pomodoroPresetButton の disable 設定は不要になったため削除
-    }
-
-    enableTimeInputs() {
-        this.focusTimeInput.disabled = false;
-        // pomodoroPresetButton の enable 設定は不要になったため削除
-        // enableBreakCheckbox の disabled は updateTimerSettings で制御されるため、ここでは変更しない
+    setTimerSettingsEnabled(enabled) {
+        this.focusTimeInput.disabled = !enabled;
+        this.enableBreakCheckbox.disabled = !enabled;
+        // ここでプリセットボタンも無効化するなら追加
     }
 
     renderTaskList(tasks, onDelete, onToggle) {
@@ -301,6 +341,7 @@ class UserInterface {
 
     renderCalendar(year, month, focusRecords) {
         this.calendarHeader.textContent = `${year}年 ${month + 1}月`;
+        // 既存の日付セルをクリア (曜日名を除く)
         while (this.calendarGrid.children.length > 7) {
             this.calendarGrid.removeChild(this.calendarGrid.lastChild);
         }
@@ -308,8 +349,9 @@ class UserInterface {
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const numDays = lastDay.getDate();
-        const startDayOfWeek = firstDay.getDay();
+        const startDayOfWeek = firstDay.getDay(); // 0: 日曜日, 1: 月曜日, ...
 
+        // 空のセルを追加して、1日を正しい曜日に合わせる
         for (let i = 0; i < startDayOfWeek; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.classList.add('calendar-day', 'empty');
@@ -326,6 +368,7 @@ class UserInterface {
             const dayCell = document.createElement('div');
             dayCell.classList.add('calendar-day');
 
+            // 今日の日付をハイライト
             if (dateStr === todayStr) {
                 dayCell.classList.add('current-day');
             }
@@ -335,6 +378,7 @@ class UserInterface {
             dateNumber.textContent = i;
             dayCell.appendChild(dateNumber);
 
+            // 集中記録の表示
             const record = focusRecords[dateStr];
             if (record && record.totalMinutes > 0) {
                 const focusMinutesSpan = document.createElement('span');
@@ -351,8 +395,10 @@ class UserInterface {
 // ===============================================
 // 4. FocusRecordManager クラス
 // ===============================================
+// FocusRecordManager は、日ごとの集中時間記録を管理します。
 class FocusRecordManager {
-    constructor() {
+    constructor(storageManager) {
+        this.storageManager = storageManager;
         this.records = {};
         this.loadRecords();
     }
@@ -380,11 +426,13 @@ class FocusRecordManager {
     }
 
     saveRecords() {
-        StorageManager.save('focusRecords', this.records);
+        // 修正: this.storageManager (StorageManagerクラス) の静的メソッドを呼び出す
+        this.storageManager.save('focusRecords', this.records);
     }
 
     loadRecords() {
-        const loadedRecords = StorageManager.load('focusRecords');
+        // 修正: this.storageManager (StorageManagerクラス) の静的メソッドを呼び出す
+        const loadedRecords = this.storageManager.load('focusRecords');
         if (loadedRecords) {
             this.records = loadedRecords;
         }
@@ -394,24 +442,29 @@ class FocusRecordManager {
 // ===============================================
 // 5. TaskGoalManager クラス
 // ===============================================
+// TaskGoalManager は、長期目標とタスクリストを管理します。
 class TaskGoalManager {
-    constructor() {
+    constructor(storageManager) {
+        this.storageManager = storageManager;
         this.longTermGoal = '';
         this.tasks = [];
         this.loadTasksAndGoal();
     }
 
     saveTasksAndGoal() {
-        StorageManager.save('longTermGoal', this.longTermGoal);
-        StorageManager.save('tasks', this.tasks);
+        // 修正: this.storageManager (StorageManagerクラス) の静的メソッドを呼び出す
+        this.storageManager.save('longTermGoal', this.longTermGoal);
+        this.storageManager.save('tasks', this.tasks);
     }
 
     loadTasksAndGoal() {
-        const loadedGoal = StorageManager.load('longTermGoal');
+        // 修正: this.storageManager (StorageManagerクラス) の静的メソッドを呼び出す
+        const loadedGoal = this.storageManager.load('longTermGoal');
         if (typeof loadedGoal === 'string') {
             this.longTermGoal = loadedGoal;
         }
-        const loadedTasks = StorageManager.load('tasks');
+        // 修正: this.storageManager (StorageManagerクラス) の静的メソッドを呼び出す
+        const loadedTasks = this.storageManager.load('tasks');
         if (Array.isArray(loadedTasks)) {
             this.tasks = loadedTasks;
         }
@@ -452,62 +505,118 @@ class TaskGoalManager {
 }
 
 // ===============================================
-// 6. App クラス (メインロジック - シーケンスモード対応)
+// 6. App クラス (メインロジック)
 // ===============================================
+// App クラスは、アプリケーションのメインロジックと各コンポーネントの連携を管理します。
 class App {
     constructor() {
         this.ui = new UserInterface();
-        this.timer = new Timer(this.ui.getFocusTimeInput(), 5);
-        this.taskGoalManager = new TaskGoalManager();
-        this.focusRecordManager = new FocusRecordManager();
+        // 修正: StorageManagerのインスタンスではなく、クラス自体を渡す
+        this.focusRecordManager = new FocusRecordManager(StorageManager);
+        this.taskGoalManager = new TaskGoalManager(StorageManager);
 
-        this.currentCalendarDate = new Date();
+        // Timerインスタンスの作成時にコールバックを渡す
+        this.timer = new Timer(
+            (remainingTime, isFocusing) => {
+                this.ui.updateTimerDisplay(remainingTime, isFocusing);
+                const total = this.timer.getCurrentSessionTotalTime();
+                const progress = total > 0 ? (remainingTime / total) * 100 : 0; // パーセンテージで渡す
+                this.ui.updateProgressBar(progress);
+            },
+            (sessionWasFocusing) => this.handleSessionComplete(sessionWasFocusing),
+            () => this.handleSequenceComplete()
+        );
+
+        this.currentYear = new Date().getFullYear();
+        this.currentMonth = new Date().getMonth();
     }
 
     init() {
+        this.loadAllData();
         this.setupEventListeners();
-        this.loadInitialData();
-        // アプリ起動時に、現在のUI設定をTimerに反映し、タイマーをリセットする
-        this.updateTimerSettings(true);
-        this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
-        this.renderTasks();
-        this.ui.updateProgressBar(1);
-        this.renderCalendar();
+
+        // UIの初期表示
+        this.ui.renderTaskList(this.taskGoalManager.getTasks(),
+            this.deleteTask.bind(this),
+            this.toggleTaskCompletion.bind(this));
+        this.ui.renderCalendar(this.currentYear, this.currentMonth, this.focusRecordManager.getRecordsForMonth(this.currentYear, this.currentMonth));
+        this.ui.setLongTermGoal(this.taskGoalManager.getLongTermGoal());
+
+        const savedTimerState = StorageManager.load('timerState');
+        if (savedTimerState) {
+            this.timer.setState(savedTimerState); // ここでTimerインスタンスの状態は復元される
+
+            // ここからUIの表示とボタンの状態を調整
+            // 重要: savedTimerState の isPaused プロパティが true の場合、タイマーは停止状態から開始すべき
+            if (!this.timer.getIsPaused() && this.timer.getRemainingTime() > 0) {
+                // タイマーが稼働中だった場合
+                this.ui.setStartButtonEnabled(false);
+                this.ui.setStopButtonEnabled(true);
+                this.ui.setTimerSettingsEnabled(false); // 稼働中は設定変更不可
+                this.timer.start(); // 自動で再開
+            } else {
+                // タイマーが一時停止中だった場合、または時間が0だった場合
+                this.ui.setStartButtonEnabled(true);
+                this.ui.setStopButtonEnabled(true); // 一時停止中の停止ボタンは有効のまま
+                this.ui.setTimerSettingsEnabled(true); // 一時停止中は設定変更可能
+            }
+            
+            // ★重要: ここで現在のタイマー状態に基づいてUIを明示的に更新する
+            this.ui.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
+            const total = this.timer.getCurrentSessionTotalTime();
+            const progress = total > 0 ? (this.timer.getRemainingTime() / total) * 100 : 100; // 時間が0なら100% (満タン)
+            this.ui.updateProgressBar(progress);
+
+            // 背景色のクラスもsetStateで onTick が呼ばれるので更新されるはずだが、念のため init の最後でも確認
+            document.body.className = this.timer.getIsFocusing() ? 'focusing' : 'break-time';
+            this.ui.timerDisplay.className = `timer-display ${this.timer.getIsFocusing() ? 'focusing' : 'break-time'}`;
+
+
+        } else {
+            // 保存された状態がない場合、デフォルトのUI状態を設定し、タイマーをリセット
+            this.ui.setStartButtonEnabled(true);
+            this.ui.setStopButtonEnabled(false);
+            this.ui.setTimerSettingsEnabled(true);
+            this.timer.reset(); // これでタイマーは初期状態 (25:00, focus, paused) になる
+
+            // ★重要: デフォルト状態の場合もUIを更新
+            this.ui.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
+            this.ui.updateProgressBar(100); // 100%に設定
+
+            document.body.classList.remove('focusing', 'break-time'); // デフォルトに戻す
+            this.ui.timerDisplay.classList.remove('focusing', 'break-time'); // デフォルトに戻す
+        }
+    }
+
+    loadAllData() {
+        this.taskGoalManager.loadTasksAndGoal();
+        this.focusRecordManager.loadRecords();
+        // タイマーの状態は init の中で別途読み込む
     }
 
     setupEventListeners() {
-        this.ui.startButton.addEventListener('click', () => this.startSession());
-        this.ui.stopButton.addEventListener('click', () => this.stopSession());
-        this.ui.resetButton.addEventListener('click', () => this.resetSession());
+        this.ui.startButton.addEventListener('click', () => {
+            this.startSession();
+            this.saveTimerState(); // タイマー開始時に状態を保存
+        });
+        this.ui.stopButton.addEventListener('click', () => {
+            this.pauseSession();
+            this.saveTimerState(); // タイマー停止時に状態を保存
+        });
+        this.ui.resetButton.addEventListener('click', () => {
+            this.resetSession();
+            this.saveTimerState(); // タイマーリセット時に状態を保存
+        });
 
         // 集中時間入力と休憩チェックボックスの変更イベント
-        // これらの変更は、タイマーが一時停止している場合にのみ新しい設定をタイマーに反映し、リセットします。
-        this.ui.focusTimeInput.addEventListener('change', () => this.handleTimerSettingsChange());
-        this.ui.enableBreakCheckbox.addEventListener('change', () => this.handleTimerSettingsChange());
-
-        this.timer.onTick = (remainingTime) => {
-            this.updateTimerDisplay(remainingTime, this.timer.getIsFocusing());
-            const total = this.timer.getCurrentSessionTotalTime();
-            // 0除算回避
-            this.ui.updateProgressBar(total > 0 ? remainingTime / total : 0);
-        };
-
-        this.timer.onComplete = (sessionWasFocusing) => {
-            if (sessionWasFocusing === true) {
-                // シーケンスの場合、各集中時間の記録ではなく、設定された集中時間を記録します
-                const completedFocusMinutes = Math.floor(this.timer.currentSessionTotalTime / 60);
-                this.focusRecordManager.addFocusMinutes(completedFocusMinutes);
-                this.renderCalendar();
-                alert('集中セッションが終了しました！');
-            } else if (sessionWasFocusing === false) {
-                alert('休憩セッションが終了しました！');
-            }
-        };
-
-        this.timer.onSequenceComplete = () => {
-            alert('全てのセッションが終了しました！');
-            this.resetSession();
-        };
+        this.ui.focusTimeInput.addEventListener('change', () => {
+            this.handleTimerSettingsChange();
+            this.saveTimerState(); // 設定変更時にも状態を保存
+        });
+        this.ui.enableBreakCheckbox.addEventListener('change', () => {
+            this.handleTimerSettingsChange();
+            this.saveTimerState(); // 設定変更時にも状態を保存
+        });
 
         this.ui.saveTasksButton.addEventListener('click', () => this.saveTasksAndGoals());
         this.ui.addTaskButton.addEventListener('click', () => this.addTask());
@@ -521,95 +630,125 @@ class App {
         this.ui.nextMonthButton.addEventListener('click', () => this.changeMonth(1));
     }
 
-    loadInitialData() {
-        this.taskGoalManager.loadTasksAndGoal();
-        this.ui.setLongTermGoal(this.taskGoalManager.getLongTermGoal());
-        this.focusRecordManager.loadRecords();
-    }
-
     // タイマー設定が変更されたときの共通ハンドラ
     handleTimerSettingsChange() {
         if (this.timer.getIsPaused()) { // タイマーが一時停止または初期状態の場合のみ
             this.updateTimerSettings(true); // タイマーをリセットしてUI設定を適用
-            this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
-            this.ui.updateProgressBar(1);
+            this.ui.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
+            const total = this.timer.getCurrentSessionTotalTime();
+            this.ui.updateProgressBar(total > 0 ? (this.timer.getRemainingTime() / total) * 100 : 100);
+        } else {
+            // タイマーが稼働中に設定を変更しても即座には適用されないことを示す（UIは有効化しない）
+            // UIの disabled 状態は App.startSession / pauseSession / resetSession で制御される
         }
     }
 
     startSession() {
+        console.log('startSession() 呼び出し');
+        console.log('現在の状態: isPaused=', this.timer.getIsPaused(), ' remainingTime=', this.timer.getRemainingTime());
+
+        // ケース1: タイマーが稼働中であれば、何もしない
         if (!this.timer.getIsPaused()) {
-            return; // すでに稼働中なら何もしない
+            console.log('タイマーが既に稼働中のため、何もしません。');
+            return;
         }
 
-        // タイマーが一時停止している場合でも、UIの設定値が変更されていないか確認
-        // 変更されている場合は、resetSessionを呼び出して現在のUI設定で再開
-        let isTimerSettingsActuallyChanged = false;
-        if (this.timer.sessionSequence === null) { // 通常モードの場合
-            // focusTimeInputの現在の値（分）と、タイマーに設定されている最初のフォーカス時間（秒）を比較
-            if (this.ui.getFocusTimeInput() * 60 !== this.timer.initialFocusTime ||
-                this.ui.isBreakEnabled() !== (this.timer.initialBreakTime > 0)) {
-                isTimerSettingsActuallyChanged = true;
+        // ケース2: タイマーが一時停止中で、残り時間がある状態からの再開
+        // この場合はリセットせず、そのままスタートする
+        if (this.timer.getIsPaused() && this.timer.getRemainingTime() > 0) {
+            console.log('一時停止中から再開します。');
+            // ここではresetSession()を呼ばない！
+        } 
+        // ケース3: タイマーが一時停止中だが、残り時間が0、または設定が変更されている場合
+        // この場合は、設定変更チェックを行う
+        else { // this.timer.getIsPaused() が true の状態
+            let isTimerSettingsActuallyChanged = false;
+            // 現在のUIの入力値とタイマーの初期設定値を比較（シーケンスモードでない場合）
+            if (this.timer.sessionSequence === null) {
+                const currentFocusInput = this.ui.getFocusTimeInput();
+                const currentBreakEnabled = this.ui.isBreakEnabled();
+                // タイマーのinitialFocusTime/initialBreakTimeは秒なので分に変換して比較
+                if (currentFocusInput * 60 !== this.timer.initialFocusTime ||
+                    (currentBreakEnabled && this.timer.initialBreakTime === 0) ||
+                    (!currentBreakEnabled && this.timer.initialBreakTime > 0)) {
+                    isTimerSettingsActuallyChanged = true;
+                }
+            } else {
+                // シーケンスモードでの設定変更チェック (複雑なため以前のロジックを維持)
+                const totalFocusMinutesInUI = this.ui.getFocusTimeInput();
+                const isBreakEnabledInUI = this.ui.isBreakEnabled();
+                
+                const totalFocusSecondsInTimerSequence = this.timer.sessionSequence.reduce((sum, s) => sum + (s.type === 'focus' ? s.duration : 0), 0);
+                const hasBreakInTimerSequence = this.timer.sessionSequence.some(s => s.type === 'break');
+
+                if (totalFocusMinutesInUI * 60 !== totalFocusSecondsInTimerSequence ||
+                    isBreakEnabledInUI !== hasBreakInTimerSequence) {
+                    isTimerSettingsActuallyChanged = true;
+                }
             }
-        } else { // シーケンスモードの場合
-            // 現在のUIの集中時間合計が、シーケンスの合計集中時間と異なる場合
-            const totalMinutesInSequence = this.timer.sessionSequence.reduce((sum, s) => sum + (s.type === 'focus' ? s.duration : 0), 0) / 60;
-            if (totalMinutesInSequence !== this.ui.getFocusTimeInput() ||
-                (this.timer.sessionSequence.some(s => s.type === 'break') !== this.ui.isBreakEnabled())) {
-                isTimerSettingsActuallyChanged = true;
+
+            if (this.timer.getRemainingTime() <= 0 || isTimerSettingsActuallyChanged) {
+                console.log('残り時間が0か設定変更あり: resetSession() を呼び出します。');
+                this.resetSession(); // リセットしてから開始
             }
         }
-
-        if (this.timer.getRemainingTime() <= 0 || isTimerSettingsActuallyChanged) {
-            // 時間が0になっているか、または設定が変更されている場合、リセットしてから開始
-            this.resetSession();
-        }
-
-        this.ui.disableStartButton();
-        this.ui.enableStopButton();
-        this.ui.disableTimeInputs(); // タイマー稼働中は設定変更を不可にする
+        
+        // タイマーを開始
         this.timer.start();
+        console.log('タイマーを開始しました。');
+
+        // UIの状態を更新
+        this.ui.setStartButtonEnabled(false);
+        this.ui.setStopButtonEnabled(true);
+        this.ui.setTimerSettingsEnabled(false); // タイマー稼働中は設定変更を不可にする
+        document.body.classList.add('focusing');
+        document.body.classList.remove('break-time'); // 念のため
+        this.ui.timerDisplay.classList.add('focusing');
+        this.ui.timerDisplay.classList.remove('break-time'); // 念のため
     }
 
-    stopSession() {
+    pauseSession() {
         if (this.timer.getIsPaused()) {
             return; // すでに停止中なら何もしない
         }
         this.timer.pause();
-        this.ui.enableStartButton();
-        this.ui.enableStopButton(); // 停止後も再開できるよう、ボタンは有効のまま
-        this.ui.enableTimeInputs(); // 設定変更を可能にする
+        this.ui.setStartButtonEnabled(true);
+        this.ui.setStopButtonEnabled(true); // 停止後も再開できるよう、ボタンは有効のまま
+        this.ui.setTimerSettingsEnabled(true); // 設定変更を可能にする
     }
 
     resetSession() {
         this.timer.reset(); // Timerクラスのresetメソッドが内部状態をリセット
         this.updateTimerSettings(true); // UIの設定値に合わせてTimerを再設定（重要）
-        this.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
-        this.ui.updateProgressBar(1);
-        this.ui.enableStartButton();
-        this.ui.disableStopButton(); // リセット後はstopは不要
-        this.ui.enableTimeInputs();
+        this.ui.setStartButtonEnabled(true);
+        this.ui.setStopButtonEnabled(false); // リセット後はstopは不要
+        this.ui.setTimerSettingsEnabled(true);
+        document.body.classList.remove('focusing', 'break-time');
+        this.ui.timerDisplay.classList.remove('focusing', 'break-time');
+        this.ui.updateTimerDisplay(this.timer.getRemainingTime(), this.timer.getIsFocusing());
+        this.ui.updateProgressBar(100); // プログレスバーを100%にリセット
     }
 
     /**
-     * タイマーの設定を更新し、必要であればタイマーをリセットします。
+     * タイマーの設定をUIの入力値に基づいて更新し、必要であればタイマーをリセットします。
      * @param {boolean} shouldResetTimer - trueの場合、タイマーを現在のUI設定でリセットします。
      */
     updateTimerSettings(shouldResetTimer = false) {
         let focusMinutes = this.ui.getFocusTimeInput();
         let isBreakEnabled = this.ui.isBreakEnabled();
 
-        const baseFocusTime = 3;
-        const baseBreakTime = 1;
+        const baseFocusTime = 3; // 集中セッションの基本単位（分）
+        const baseBreakTime = 1; // 休憩セッションの基本単位（分）
 
-        // ルール1: 集中時間が25分以下の間は、休憩は選択不可 (UI側の制御)
+        // ルール1: 集中時間が baseFocusTime (3分) 以下の間は、休憩は選択不可
         if (focusMinutes <= baseFocusTime) {
             this.ui.setBreakCheckboxDisabled(true);
-            this.ui.setBreakEnabled(false);
+            this.ui.setBreakEnabled(false); // 強制的に休憩なしにする
             if (shouldResetTimer) {
                 this.timer.setTimes(focusMinutes, 0); // 休憩なし(0分)に設定
             }
         }
-        // ルール2: 集中時間が25分を超え、かつ休憩が選択されている場合、シーケンスを設定
+        // ルール2: 集中時間が baseFocusTime (3分) を超え、かつ休憩が選択されている場合、シーケンスを設定
         else if (focusMinutes > baseFocusTime && isBreakEnabled) {
             const sequence = [];
             let remainingFocusTime = focusMinutes;
@@ -617,7 +756,7 @@ class App {
             while (remainingFocusTime >= baseFocusTime) {
                 sequence.push({ type: 'focus', duration: baseFocusTime });
                 remainingFocusTime -= baseFocusTime;
-                if (remainingFocusTime > 0) { // 最後の集中セッションの後に休憩はなし
+                if (remainingFocusTime > 0) { // 残りの集中時間がある場合のみ休憩を追加
                     sequence.push({ type: 'break', duration: baseBreakTime });
                 }
             }
@@ -629,12 +768,12 @@ class App {
                 this.timer.setSessionSequence(sequence);
             }
             this.ui.setBreakCheckboxDisabled(false);
-            this.ui.setBreakEnabled(true);
+            this.ui.setBreakEnabled(true); // UIの設定を維持
         }
-        // ルール3: 集中時間が25分を超え、かつ休憩が選択されていない場合
+        // ルール3: 集中時間が baseFocusTime (3分) を超え、かつ休憩が選択されていない場合
         else if (focusMinutes > baseFocusTime && !isBreakEnabled) {
-            this.ui.setBreakCheckboxDisabled(false);
-            this.ui.setBreakEnabled(false);
+            this.ui.setBreakCheckboxDisabled(false); // 選択は可能にするが、現在選択されていない状態を維持
+            this.ui.setBreakEnabled(false); // UIの設定を維持
             if (shouldResetTimer) {
                 this.timer.setTimes(focusMinutes, 0); // 集中時間のみ設定
             }
@@ -645,18 +784,6 @@ class App {
         this.taskGoalManager.setLongTermGoal(this.ui.getLongTermGoal());
         this.taskGoalManager.saveTasksAndGoal();
         alert('タスクと長期目標を保存しました！');
-    }
-
-    updateTimerDisplay(seconds, isFocusing) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        this.ui.timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-        this.ui.timerDisplay.className = `timer-display ${isFocusing ? 'focusing' : 'break-time'}`;
-        document.body.className = isFocusing ? 'focusing' : 'break-time';
-    }
-
-    updateProgressBar(progress) {
-        this.ui.progressBar.style.width = `${progress * 100}%`;
     }
 
     addTask() {
@@ -684,20 +811,53 @@ class App {
             this.toggleTaskCompletion.bind(this));
     }
 
-    renderCalendar() {
-        const year = this.currentCalendarDate.getFullYear();
-        const month = this.currentCalendarDate.getMonth();
+    handleSessionComplete(sessionWasFocusing) {
+        if (sessionWasFocusing === true) {
+            // 集中セッションが完了したとき、elapsedFocusTime（秒）を分に変換して記録
+            const completedFocusMinutes = Math.floor(this.timer.elapsedFocusTime / 60);
+            if (completedFocusMinutes > 0) {
+                this.focusRecordManager.addFocusMinutes(completedFocusMinutes);
+                this.renderCalendar(); // カレンダーを更新
+            }
+            this.timer.elapsedFocusTime = 0; // 記録後、経過集中時間をリセット
+            alert('集中セッションが終了しました！');
+        } else if (sessionWasFocusing === false) {
+            alert('休憩セッションが終了しました！');
+        }
+        this.saveTimerState(); // セッション完了時にも状態を保存
+    }
 
-        const records = this.focusRecordManager.getRecordsForMonth(year, month);
-        this.ui.renderCalendar(year, month, records);
+    handleSequenceComplete() {
+        alert('全てのセッションが終了しました！');
+        this.resetSession();
+        this.saveTimerState(); // シーケンス完了時にも状態を保存
+    }
+
+    renderCalendar() {
+        const records = this.focusRecordManager.getRecordsForMonth(this.currentYear, this.currentMonth);
+        this.ui.renderCalendar(this.currentYear, this.currentMonth, records);
     }
 
     changeMonth(delta) {
-        this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + delta);
+        this.currentMonth += delta;
+        if (this.currentMonth > 11) {
+            this.currentMonth = 0;
+            this.currentYear++;
+        } else if (this.currentMonth < 0) {
+            this.currentMonth = 11;
+            this.currentYear--;
+        }
         this.renderCalendar();
+    }
+
+    // 新規追加: タイマーの状態を保存する
+    saveTimerState() {
+        // 修正: StorageManager.save を直接呼び出す
+        StorageManager.save('timerState', this.timer.getState());
     }
 }
 
+// アプリケーションのエントリーポイント
 document.addEventListener('DOMContentLoaded', () => {
     const app = new App();
     app.init();
