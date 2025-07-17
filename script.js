@@ -737,8 +737,8 @@ class App {
         let focusMinutes = this.ui.getFocusTimeInput();
         let isBreakEnabled = this.ui.isBreakEnabled();
 
-        const baseFocusTime = 3; // 集中セッションの基本単位（分）
-        const baseBreakTime = 1; // 休憩セッションの基本単位（分）
+        const baseFocusTime = 25; // 集中セッションの基本単位（分）
+        const baseBreakTime = 5; // 休憩セッションの基本単位（分）
 
         // ルール1: 集中時間が baseFocusTime (3分) 以下の間は、休憩は選択不可
         if (focusMinutes <= baseFocusTime) {
@@ -850,9 +850,8 @@ class App {
         this.renderCalendar();
     }
 
-    // 新規追加: タイマーの状態を保存する
+
     saveTimerState() {
-        // 修正: StorageManager.save を直接呼び出す
         StorageManager.save('timerState', this.timer.getState());
     }
 }
